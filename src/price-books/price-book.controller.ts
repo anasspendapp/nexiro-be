@@ -12,7 +12,7 @@ export const priceBookController = {
     }
   },
 
-  // Get current active price
+  // Get current active price book
   getCurrentPrice: async (req: Request, res: Response) => {
     try {
       const currentPrice = await PriceBook.findOne({
@@ -24,6 +24,61 @@ export const priceBookController = {
       }
 
       res.json(currentPrice);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Get current active plans only
+  getCurrentPlans: async (req: Request, res: Response) => {
+    try {
+      const currentPrice = await PriceBook.findOne({
+        effectiveFrom: { $lte: new Date() },
+      }).sort({ effectiveFrom: -1 });
+
+      if (!currentPrice) {
+        return res.status(404).json({ error: "No active plans found" });
+      }
+
+      // Filter only active plans
+      const activePlans = currentPrice.plans.filter((plan) => plan.isActive);
+
+      res.json({
+        plans: activePlans,
+        creditsPerEnhancement: currentPrice.creditsPerEnhancement,
+        versionTag: currentPrice.versionTag,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  // Get specific plan by name from current price book
+  getPlanByName: async (req: Request, res: Response) => {
+    try {
+      const { planName } = req.params;
+
+      const currentPrice = await PriceBook.findOne({
+        effectiveFrom: { $lte: new Date() },
+      }).sort({ effectiveFrom: -1 });
+
+      if (!currentPrice) {
+        return res.status(404).json({ error: "No active price book found" });
+      }
+
+      const plan = currentPrice.getPlanByName(planName);
+
+      if (!plan) {
+        return res.status(404).json({ error: `Plan "${planName}" not found` });
+      }
+
+      if (!plan.isActive) {
+        return res
+          .status(404)
+          .json({ error: `Plan "${planName}" is not active` });
+      }
+
+      res.json(plan);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

@@ -5,6 +5,8 @@ const router = Router();
 
 router.get("/", priceBookController.getAllPriceBooks);
 router.get("/current", priceBookController.getCurrentPrice);
+router.get("/current/plans", priceBookController.getCurrentPlans);
+router.get("/current/plans/:planName", priceBookController.getPlanByName);
 router.get("/:id", priceBookController.getPriceBookById);
 router.post("/", priceBookController.createPriceBook);
 router.put("/:id", priceBookController.updatePriceBook);
