@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AdminUser } from "./admin-user.model";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
@@ -66,8 +66,7 @@ export const adminUserController = {
         passwordHash,
       });
 
-      const adminUserResponse = adminUser.toJSON();
-      delete adminUserResponse.passwordHash;
+      const { passwordHash: _, ...adminUserResponse } = adminUser.toJSON();
 
       res.status(201).json(adminUserResponse);
     } catch (error: any) {
@@ -95,8 +94,7 @@ export const adminUserController = {
       }
 
       await adminUser.update(updates);
-      const adminUserResponse = adminUser.toJSON();
-      delete adminUserResponse.passwordHash;
+      const { passwordHash: _, ...adminUserResponse } = adminUser.toJSON();
 
       res.json(adminUserResponse);
     } catch (error: any) {
@@ -146,6 +144,7 @@ export const adminUserController = {
       }
 
       // Generate JWT token
+      const signOptions: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
       const token = jwt.sign(
         {
           id: adminUser.id,
@@ -154,12 +153,11 @@ export const adminUserController = {
           role: "admin",
         },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN },
+        signOptions,
       );
 
       // Return token and user info
-      const adminUserResponse = adminUser.toJSON();
-      delete adminUserResponse.passwordHash;
+      const { passwordHash: _, ...adminUserResponse } = adminUser.toJSON();
 
       res.json({
         token,
