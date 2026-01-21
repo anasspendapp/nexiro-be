@@ -2,25 +2,48 @@ import express, { Request, Response, Router } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import mongoose from "mongoose";
+import sequelize from "./database";
 
 // Import routes
 import userRoutes from "./users/user.routes";
 import priceBookRoutes from "./price-books/price-book.routes";
+import planRoutes from "./plans/plan.routes";
 import imageTaskRoutes from "./image-tasks/image-task.routes";
 import ledgerRoutes from "./ledgers/ledger.routes";
 import stripeSessionRoutes from "./stripe-sessions/stripe-session.routes";
+import stripeRoutes from "./stripe/stripe.routes";
+import geminiRoutes from "./gemini/gemini.routes";
+import adminUserRoutes from "./admin-users/admin-user.routes";
+
+// Import models to initialize associations
+import "./users/user.model";
+import "./price-books/price-book.model";
+import "./plans/plan.model";
+import "./image-tasks/image-task.model";
+import "./ledgers/ledger.model";
+import "./stripe-sessions/stripe-session.model";
+import "./admin-users/admin-user.model";
+
+// Initialize model associations
+import { initializeAssociations } from "./models/associations";
 
 require("dotenv").config();
 
 const app = express();
 const router = Router();
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI || "mongodb://localhost:27017/nexira")
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch((error) => console.error("❌ Error connecting to MongoDB:", error));
+// Initialize associations after models are loaded
+initializeAssociations();
+
+// Connect to PostgreSQL and sync models
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("✅ Connected to PostgreSQL");
+    return sequelize.sync({ alter: false }); // Set to true for development to auto-update schema
+  })
+  .then(() => console.log("✅ Database models synchronized"))
+  .catch((error) => console.error("❌ Error connecting to PostgreSQL:", error));
 
 // Middleware
 app.use(helmet());
@@ -77,17 +100,27 @@ router.get("/health", (req: Request, res: Response) => {
     status: "UP",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    mongodb:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    database: sequelize
+      .authenticate()
+      .then(() => "connected")
+      .catch(() => "disconnected"),
   });
 });
 
 // API routes
 router.use("/api/users", userRoutes);
 router.use("/api/price-books", priceBookRoutes);
+router.use("/api/plans", planRoutes);
 router.use("/api/image-tasks", imageTaskRoutes);
 router.use("/api/ledgers", ledgerRoutes);
 router.use("/api/stripe-sessions", stripeSessionRoutes);
+router.use("/api/admin-users", adminUserRoutes);
+
+// Stripe routes (webhook and checkout)
+app.use("/", stripeRoutes);
+
+// Gemini routes
+router.use("/api", geminiRoutes);
 
 app.use("/", router);
 

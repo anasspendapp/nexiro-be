@@ -1,11 +1,21 @@
 import { Request, Response } from "express";
 import { PriceBook } from "./price-book.model";
+import { Plan } from "../plans/plan.model";
+import { Op } from "sequelize";
 
 export const priceBookController = {
   // Get all price books
   getAllPriceBooks: async (req: Request, res: Response) => {
     try {
-      const priceBooks = await PriceBook.find().sort({ effectiveFrom: -1 });
+      const priceBooks = await PriceBook.findAll({
+        order: [["effectiveFrom", "DESC"]],
+        include: [
+          {
+            model: Plan,
+            as: "plans",
+          },
+        ],
+      });
       res.json(priceBooks);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -15,9 +25,7 @@ export const priceBookController = {
   // Get current active price book
   getCurrentPrice: async (req: Request, res: Response) => {
     try {
-      const currentPrice = await PriceBook.findOne({
-        effectiveFrom: { $lte: new Date() },
-      }).sort({ effectiveFrom: -1 });
+      const currentPrice = await PriceBook.getCurrentPrice();
 
       if (!currentPrice) {
         return res.status(404).json({ error: "No active price found" });
@@ -32,16 +40,15 @@ export const priceBookController = {
   // Get current active plans only
   getCurrentPlans: async (req: Request, res: Response) => {
     try {
-      const currentPrice = await PriceBook.findOne({
-        effectiveFrom: { $lte: new Date() },
-      }).sort({ effectiveFrom: -1 });
+      const currentPrice = await PriceBook.getCurrentPrice();
 
       if (!currentPrice) {
         return res.status(404).json({ error: "No active plans found" });
       }
 
-      // Filter only active plans
-      const activePlans = currentPrice.plans.filter((plan) => plan.isActive);
+      // Filter only active plans from the included plans
+      const activePlans =
+        currentPrice.plans?.filter((plan) => plan.isActive) || [];
 
       res.json({
         plans: activePlans,
@@ -58,15 +65,13 @@ export const priceBookController = {
     try {
       const { planName } = req.params;
 
-      const currentPrice = await PriceBook.findOne({
-        effectiveFrom: { $lte: new Date() },
-      }).sort({ effectiveFrom: -1 });
+      const currentPrice = await PriceBook.getCurrentPrice();
 
       if (!currentPrice) {
         return res.status(404).json({ error: "No active price book found" });
       }
 
-      const plan = currentPrice.getPlanByName(planName);
+      const plan = await currentPrice.getPlanByName(planName);
 
       if (!plan) {
         return res.status(404).json({ error: `Plan "${planName}" not found` });
@@ -87,7 +92,14 @@ export const priceBookController = {
   // Get price book by ID
   getPriceBookById: async (req: Request, res: Response) => {
     try {
-      const priceBook = await PriceBook.findById(req.params.id);
+      const priceBook = await PriceBook.findByPk(req.params.id, {
+        include: [
+          {
+            model: Plan,
+            as: "plans",
+          },
+        ],
+      });
       if (!priceBook) {
         return res.status(404).json({ error: "Price book not found" });
       }
@@ -100,8 +112,7 @@ export const priceBookController = {
   // Create new price book version
   createPriceBook: async (req: Request, res: Response) => {
     try {
-      const priceBook = new PriceBook(req.body);
-      await priceBook.save();
+      const priceBook = await PriceBook.create(req.body);
       res.status(201).json(priceBook);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -111,16 +122,12 @@ export const priceBookController = {
   // Update price book
   updatePriceBook: async (req: Request, res: Response) => {
     try {
-      const priceBook = await PriceBook.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true, runValidators: true },
-      );
-
+      const priceBook = await PriceBook.findByPk(req.params.id);
       if (!priceBook) {
         return res.status(404).json({ error: "Price book not found" });
       }
 
+      await priceBook.update(req.body);
       res.json(priceBook);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -130,10 +137,11 @@ export const priceBookController = {
   // Delete price book
   deletePriceBook: async (req: Request, res: Response) => {
     try {
-      const priceBook = await PriceBook.findByIdAndDelete(req.params.id);
+      const priceBook = await PriceBook.findByPk(req.params.id);
       if (!priceBook) {
         return res.status(404).json({ error: "Price book not found" });
       }
+      await priceBook.destroy();
       res.json({ message: "Price book deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

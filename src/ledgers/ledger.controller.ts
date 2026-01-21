@@ -6,9 +6,16 @@ export const ledgerController = {
   // Get all ledger entries
   getAllEntries: async (req: Request, res: Response) => {
     try {
-      const entries = await Ledger.find()
-        .populate("userId", "email")
-        .sort({ timestamp: -1 });
+      const entries = await Ledger.findAll({
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["email"],
+          },
+        ],
+        order: [["timestamp", "DESC"]],
+      });
       res.json(entries);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -18,8 +25,9 @@ export const ledgerController = {
   // Get ledger entries by user ID
   getEntriesByUserId: async (req: Request, res: Response) => {
     try {
-      const entries = await Ledger.find({ userId: req.params.userId }).sort({
-        timestamp: -1,
+      const entries = await Ledger.findAll({
+        where: { userId: req.params.userId },
+        order: [["timestamp", "DESC"]],
       });
       res.json(entries);
     } catch (error: any) {
@@ -30,10 +38,15 @@ export const ledgerController = {
   // Get ledger entry by ID
   getEntryById: async (req: Request, res: Response) => {
     try {
-      const entry = await Ledger.findById(req.params.id).populate(
-        "userId",
-        "email",
-      );
+      const entry = await Ledger.findByPk(req.params.id, {
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["email"],
+          },
+        ],
+      });
 
       if (!entry) {
         return res.status(404).json({ error: "Ledger entry not found" });
@@ -51,13 +64,13 @@ export const ledgerController = {
         req.body;
 
       // Get current user balance
-      const user = await User.findById(userId);
+      const user = await User.findByPk(userId);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
 
       // Calculate new balance
-      let balanceAfter = user.creditBalance;
+      let balanceAfter = Number(user.creditBalance);
       if (type === TransactionType.CREDIT) {
         balanceAfter += amount;
       } else if (type === TransactionType.DEBIT) {
@@ -70,7 +83,7 @@ export const ledgerController = {
       }
 
       // Create ledger entry
-      const entry = new Ledger({
+      const entry = await Ledger.create({
         userId,
         type,
         amount,
@@ -80,11 +93,8 @@ export const ledgerController = {
         description,
       });
 
-      await entry.save();
-
       // Update user balance
-      user.creditBalance = balanceAfter;
-      await user.save();
+      await user.update({ creditBalance: balanceAfter });
 
       res.status(201).json(entry);
     } catch (error: any) {
@@ -95,9 +105,17 @@ export const ledgerController = {
   // Get user balance history
   getBalanceHistory: async (req: Request, res: Response) => {
     try {
-      const entries = await Ledger.find({ userId: req.params.userId })
-        .sort({ timestamp: -1 })
-        .select("timestamp type amount balanceAfter description");
+      const entries = await Ledger.findAll({
+        where: { userId: req.params.userId },
+        attributes: [
+          "timestamp",
+          "type",
+          "amount",
+          "balanceAfter",
+          "description",
+        ],
+        order: [["timestamp", "DESC"]],
+      });
 
       res.json(entries);
     } catch (error: any) {

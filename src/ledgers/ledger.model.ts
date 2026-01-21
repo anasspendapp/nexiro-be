@@ -1,80 +1,126 @@
-import mongoose, { Document, Schema } from "mongoose";
+import { DataTypes, Model, Optional, ForeignKey } from "sequelize";
+import sequelize from "../database";
+import { User } from "../users/user.model";
 
 export enum TransactionType {
   CREDIT = "credit",
   DEBIT = "debit",
 }
 
-export interface ILedger extends Document {
-  userId: mongoose.Types.ObjectId;
+export interface ILedger {
+  id: number;
+  userId: ForeignKey<number>;
   type: TransactionType;
   amount: number;
   balanceAfter: number;
-  referenceId?: mongoose.Types.ObjectId;
+  referenceId?: number;
   referenceModel?: string;
   description?: string;
   timestamp: Date;
 }
 
-const ledgerSchema = new Schema<ILedger>(
+interface LedgerCreationAttributes extends Optional<
+  ILedger,
+  "id" | "referenceId" | "referenceModel" | "description" | "timestamp"
+> {}
+
+export class Ledger
+  extends Model<ILedger, LedgerCreationAttributes>
+  implements ILedger
+{
+  public id!: number;
+  public userId!: ForeignKey<number>;
+  public type!: TransactionType;
+  public amount!: number;
+  public balanceAfter!: number;
+  public referenceId?: number;
+  public referenceModel?: string;
+  public description?: string;
+  public timestamp!: Date;
+}
+
+Ledger.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
     type: {
-      type: String,
-      enum: Object.values(TransactionType),
-      required: true,
+      type: DataTypes.ENUM(...Object.values(TransactionType)),
+      allowNull: false,
     },
     amount: {
-      type: Number,
-      required: true,
-      min: 0,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0,
+      },
     },
     balanceAfter: {
-      type: Number,
-      required: true,
-      min: 0,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0,
+      },
     },
     referenceId: {
-      type: Schema.Types.ObjectId,
-      refPath: "referenceModel",
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     referenceModel: {
-      type: String,
-      enum: ["ImageTask", "StripeSession"],
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isIn: [["ImageTask", "StripeSession"]],
+      },
     },
     description: {
-      type: String,
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     timestamp: {
-      type: Date,
-      default: Date.now,
-      required: true,
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
   },
   {
-    timestamps: false, // Using custom timestamp field
+    sequelize,
+    tableName: "ledgers",
+    timestamps: false,
+    indexes: [
+      {
+        fields: ["userId", "timestamp"],
+      },
+      {
+        fields: ["referenceId"],
+      },
+    ],
+    hooks: {
+      beforeUpdate: () => {
+        throw new Error("Ledger entries are immutable and cannot be updated");
+      },
+      beforeDestroy: () => {
+        throw new Error("Ledger entries are immutable and cannot be deleted");
+      },
+      beforeBulkUpdate: () => {
+        throw new Error("Ledger entries are immutable and cannot be updated");
+      },
+      beforeBulkDestroy: () => {
+        throw new Error("Ledger entries are immutable and cannot be deleted");
+      },
+    },
   },
 );
 
-// Indexes for audit queries
-ledgerSchema.index({ userId: 1, timestamp: -1 });
-ledgerSchema.index({ referenceId: 1 });
-
-// Make the collection append-only by preventing updates and deletes
-ledgerSchema.pre("updateOne", function () {
-  throw new Error("Ledger entries are immutable and cannot be updated");
-});
-
-ledgerSchema.pre("findOneAndUpdate", function () {
-  throw new Error("Ledger entries are immutable and cannot be updated");
-});
-
-ledgerSchema.pre("deleteOne", function () {
-  throw new Error("Ledger entries are immutable and cannot be deleted");
-});
-
-export const Ledger = mongoose.model<ILedger>("Ledger", ledgerSchema);
+// Define associations
+Ledger.belongsTo(User, { foreignKey: "userId", as: "user" });

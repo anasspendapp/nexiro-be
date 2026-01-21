@@ -1,55 +1,137 @@
-import mongoose, { Document, Schema } from "mongoose";
+import { DataTypes, Model, Optional, Op } from "sequelize";
+import sequelize from "../database";
 
-export interface IUser extends Document {
+export interface IUser {
+  id: number;
   email: string;
+  fullName?: string;
   passwordHash?: string;
   googleId?: string;
   isVerified: boolean;
   googleDriveFolderId?: string;
   creditBalance: number;
+  planId?: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const userSchema = new Schema<IUser>(
+interface UserCreationAttributes extends Optional<
+  IUser,
+  | "id"
+  | "fullName"
+  | "passwordHash"
+  | "googleId"
+  | "isVerified"
+  | "googleDriveFolderId"
+  | "creditBalance"
+  | "planId"
+  | "createdAt"
+  | "updatedAt"
+> {}
+
+export class User
+  extends Model<IUser, UserCreationAttributes>
+  implements IUser
+{
+  public id!: number;
+  public email!: string;
+  public fullName?: string;
+  public passwordHash?: string;
+  public googleId?: string;
+  public isVerified!: boolean;
+  public googleDriveFolderId?: string;
+  public creditBalance!: number;
+  public planId?: number;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+User.init(
   {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
-    passwordHash: {
-      type: String,
-      required: function (this: IUser) {
-        return !this.googleId; // Required if not using Google OAuth
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+      set(value: string) {
+        this.setDataValue("email", value.toLowerCase().trim());
       },
     },
+    fullName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    passwordHash: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     googleId: {
-      type: String,
+      type: DataTypes.STRING,
+      allowNull: true,
       unique: true,
-      sparse: true, // Allows multiple null values
     },
     isVerified: {
-      type: Boolean,
-      default: false,
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
     googleDriveFolderId: {
-      type: String,
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     creditBalance: {
-      type: Number,
-      default: 0,
-      min: 0,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+      },
+    },
+    planId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "plans",
+        key: "id",
+      },
+      onDelete: "SET NULL",
+      onUpdate: "CASCADE",
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
     },
   },
   {
+    sequelize,
+    tableName: "users",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["email"],
+      },
+      {
+        unique: true,
+        fields: ["googleId"],
+        where: {
+          googleId: {
+            [Op.ne]: null,
+          },
+        },
+      },
+    ],
   },
 );
-
-// Note: email and googleId already have unique indexes from schema definition
-// No additional index() calls needed for unique fields
-
-export const User = mongoose.model<IUser>("User", userSchema);

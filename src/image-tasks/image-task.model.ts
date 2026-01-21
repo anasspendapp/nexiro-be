@@ -1,4 +1,7 @@
-import mongoose, { Document, Schema } from "mongoose";
+import { DataTypes, Model, Optional, ForeignKey } from "sequelize";
+import sequelize from "../database";
+import { User } from "../users/user.model";
+import { PriceBook } from "../price-books/price-book.model";
 
 export enum TaskStatus {
   PENDING = "pending",
@@ -7,63 +10,116 @@ export enum TaskStatus {
   FAILED = "failed",
 }
 
-export interface IImageTask extends Document {
-  userId: mongoose.Types.ObjectId;
+export interface IImageTask {
+  id: number;
+  userId: ForeignKey<number>;
   status: TaskStatus;
   inputDriveId: string;
   outputDriveId?: string;
   cost: number;
   config: Record<string, any>;
-  priceSnapshotId: mongoose.Types.ObjectId;
+  priceSnapshotId: ForeignKey<number>;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const imageTaskSchema = new Schema<IImageTask>(
+interface ImageTaskCreationAttributes extends Optional<
+  IImageTask,
+  "id" | "status" | "outputDriveId" | "config" | "createdAt" | "updatedAt"
+> {}
+
+export class ImageTask
+  extends Model<IImageTask, ImageTaskCreationAttributes>
+  implements IImageTask
+{
+  public id!: number;
+  public userId!: ForeignKey<number>;
+  public status!: TaskStatus;
+  public inputDriveId!: string;
+  public outputDriveId?: string;
+  public cost!: number;
+  public config!: Record<string, any>;
+  public priceSnapshotId!: ForeignKey<number>;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+ImageTask.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
     status: {
-      type: String,
-      enum: Object.values(TaskStatus),
-      default: TaskStatus.PENDING,
-      required: true,
+      type: DataTypes.ENUM(...Object.values(TaskStatus)),
+      allowNull: false,
+      defaultValue: TaskStatus.PENDING,
     },
     inputDriveId: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     outputDriveId: {
-      type: String,
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     cost: {
-      type: Number,
-      required: true,
-      min: 0,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0,
+      },
     },
     config: {
-      type: Schema.Types.Mixed,
-      default: {},
+      type: DataTypes.JSONB,
+      allowNull: false,
+      defaultValue: {},
     },
     priceSnapshotId: {
-      type: Schema.Types.ObjectId,
-      ref: "PriceBook",
-      required: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "price_books",
+        key: "id",
+      },
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
     },
   },
   {
+    sequelize,
+    tableName: "image_tasks",
     timestamps: true,
+    indexes: [
+      {
+        fields: ["userId", "createdAt"],
+      },
+      {
+        fields: ["status"],
+      },
+    ],
   },
 );
 
-// Compound index for efficient querying by user and time
-imageTaskSchema.index({ userId: 1, createdAt: -1 });
-imageTaskSchema.index({ status: 1 });
-
-export const ImageTask = mongoose.model<IImageTask>(
-  "ImageTask",
-  imageTaskSchema,
-);
+// Define associations
+ImageTask.belongsTo(User, { foreignKey: "userId", as: "user" });
+ImageTask.belongsTo(PriceBook, {
+  foreignKey: "priceSnapshotId",
+  as: "priceSnapshot",
+});

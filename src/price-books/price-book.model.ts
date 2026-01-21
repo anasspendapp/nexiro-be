@@ -1,111 +1,117 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+import { DataTypes, Model, Optional } from "sequelize";
+import sequelize from "../database";
 
-export interface IPricePlan {
-  name: string;
-  price: number;
-  credits: number;
-  description?: string;
-  isActive: boolean;
-}
-
-export interface IPriceBook extends Document {
+export interface IPriceBook {
+  id: number;
   versionTag: string;
-  plans: IPricePlan[];
   creditsPerEnhancement: number;
   effectiveFrom: Date;
   termsOfService: string;
   createdAt: Date;
   updatedAt: Date;
-  getPlanByName(planName: string): IPricePlan | undefined;
 }
 
-export interface IPriceBookModel extends Model<IPriceBook> {
-  getCurrentPrice(): Promise<IPriceBook | null>;
+interface PriceBookCreationAttributes extends Optional<
+  IPriceBook,
+  "id" | "creditsPerEnhancement" | "effectiveFrom" | "createdAt" | "updatedAt"
+> {}
+
+export class PriceBook
+  extends Model<IPriceBook, PriceBookCreationAttributes>
+  implements IPriceBook
+{
+  public id!: number;
+  public versionTag!: string;
+  public creditsPerEnhancement!: number;
+  public effectiveFrom!: Date;
+  public termsOfService!: string;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+
+  // Association placeholder
+  public readonly plans?: any[];
+
+  // Instance method to get plan by name
+  public async getPlanByName(planName: string): Promise<any | undefined> {
+    const { Plan } = require("../plans/plan.model");
+    const plans = await Plan.findAll({
+      where: {
+        priceBookId: this.id,
+        isActive: true,
+      },
+    });
+    return plans.find(
+      (plan: any) => plan.name.toLowerCase() === planName.toLowerCase(),
+    );
+  }
+
+  // Static method to get current active price book
+  public static async getCurrentPrice(): Promise<PriceBook | null> {
+    const { Plan } = require("../plans/plan.model");
+    return this.findOne({
+      where: sequelize.where(sequelize.col("effectiveFrom"), "<=", new Date()),
+      order: [["effectiveFrom", "DESC"]],
+      include: [
+        {
+          model: Plan,
+          as: "plans",
+        },
+      ],
+    });
+  }
 }
 
-const pricePlanSchema = new Schema<IPricePlan>(
+PriceBook.init(
   {
-    name: {
-      type: String,
-      required: true,
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
     },
-    price: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    credits: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    description: {
-      type: String,
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-  },
-  { _id: false },
-);
-
-const priceBookSchema = new Schema<IPriceBook>(
-  {
     versionTag: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
     },
-    plans: {
-      type: [pricePlanSchema],
-      required: true,
+    creditsPerEnhancement: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
       validate: {
-        validator: function (plans: IPricePlan[]) {
-          return plans.length > 0;
-        },
-        message: "At least one pricing plan is required",
+        min: 0,
       },
     },
-    creditsPerEnhancement: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 1,
-    },
     effectiveFrom: {
-      type: Date,
-      required: true,
-      default: Date.now,
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
     termsOfService: {
-      type: String,
-      required: true,
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
     },
   },
   {
+    sequelize,
+    tableName: "price_books",
     timestamps: true,
+    indexes: [
+      {
+        fields: ["effectiveFrom"],
+      },
+      {
+        unique: true,
+        fields: ["versionTag"],
+      },
+    ],
   },
-);
-
-// Index for finding current price (effectiveFrom <= now)
-priceBookSchema.index({ effectiveFrom: -1 });
-
-// Static method to get current active price book
-priceBookSchema.statics.getCurrentPrice = async function () {
-  return this.findOne({
-    effectiveFrom: { $lte: new Date() },
-  }).sort({ effectiveFrom: -1 });
-};
-
-// Method to get plan by name
-priceBookSchema.methods.getPlanByName = function (planName: string) {
-  return this.plans.find(
-    (plan: IPricePlan) => plan.name.toLowerCase() === planName.toLowerCase(),
-  );
-};
-
-export const PriceBook = mongoose.model<IPriceBook, IPriceBookModel>(
-  "PriceBook",
-  priceBookSchema,
 );

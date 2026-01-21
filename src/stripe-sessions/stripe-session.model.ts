@@ -1,7 +1,10 @@
-import mongoose, { Document, Schema } from "mongoose";
+import { DataTypes, Model, Optional, ForeignKey } from "sequelize";
+import sequelize from "../database";
+import { User } from "../users/user.model";
 
-export interface IStripeSession extends Document {
-  userId: mongoose.Types.ObjectId;
+export interface IStripeSession {
+  id: number;
+  userId: ForeignKey<number>;
   stripeId: string;
   amount: number;
   status: string;
@@ -10,44 +13,95 @@ export interface IStripeSession extends Document {
   updatedAt: Date;
 }
 
-const stripeSessionSchema = new Schema<IStripeSession>(
+interface StripeSessionCreationAttributes extends Optional<
+  IStripeSession,
+  "id" | "status" | "processedAt" | "createdAt" | "updatedAt"
+> {}
+
+export class StripeSession
+  extends Model<IStripeSession, StripeSessionCreationAttributes>
+  implements IStripeSession
+{
+  public id!: number;
+  public userId!: ForeignKey<number>;
+  public stripeId!: string;
+  public amount!: number;
+  public status!: string;
+  public processedAt?: Date;
+
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+StripeSession.init(
   {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "users",
+        key: "id",
+      },
     },
     stripeId: {
-      type: String,
-      required: true,
+      type: DataTypes.STRING,
+      allowNull: false,
       unique: true,
     },
     amount: {
-      type: Number,
-      required: true,
-      min: 0,
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0,
+      },
     },
     status: {
-      type: String,
-      required: true,
-      enum: ["pending", "processing", "succeeded", "failed", "canceled"],
-      default: "pending",
+      type: DataTypes.ENUM(
+        "pending",
+        "processing",
+        "succeeded",
+        "failed",
+        "canceled",
+      ),
+      allowNull: false,
+      defaultValue: "pending",
     },
     processedAt: {
-      type: Date,
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
     },
   },
   {
+    sequelize,
+    tableName: "stripe_sessions",
     timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["stripeId"],
+      },
+      {
+        fields: ["userId", "createdAt"],
+      },
+      {
+        fields: ["status"],
+      },
+    ],
   },
 );
 
-// Indexes
-// Note: stripeId already has a unique index from schema definition
-stripeSessionSchema.index({ userId: 1, createdAt: -1 });
-stripeSessionSchema.index({ status: 1 });
-
-export const StripeSession = mongoose.model<IStripeSession>(
-  "StripeSession",
-  stripeSessionSchema,
-);
+// Define associations
+StripeSession.belongsTo(User, { foreignKey: "userId", as: "user" });

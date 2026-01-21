@@ -1,13 +1,21 @@
 import { Request, Response } from "express";
 import { StripeSession } from "./stripe-session.model";
+import { User } from "../users/user.model";
 
 export const stripeSessionController = {
   // Get all Stripe sessions
   getAllSessions: async (req: Request, res: Response) => {
     try {
-      const sessions = await StripeSession.find()
-        .populate("userId", "email")
-        .sort({ createdAt: -1 });
+      const sessions = await StripeSession.findAll({
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["email"],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
       res.json(sessions);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -17,9 +25,10 @@ export const stripeSessionController = {
   // Get sessions by user ID
   getSessionsByUserId: async (req: Request, res: Response) => {
     try {
-      const sessions = await StripeSession.find({
-        userId: req.params.userId,
-      }).sort({ createdAt: -1 });
+      const sessions = await StripeSession.findAll({
+        where: { userId: req.params.userId },
+        order: [["createdAt", "DESC"]],
+      });
       res.json(sessions);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -29,10 +38,15 @@ export const stripeSessionController = {
   // Get session by ID
   getSessionById: async (req: Request, res: Response) => {
     try {
-      const session = await StripeSession.findById(req.params.id).populate(
-        "userId",
-        "email",
-      );
+      const session = await StripeSession.findByPk(req.params.id, {
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["email"],
+          },
+        ],
+      });
 
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
@@ -47,8 +61,15 @@ export const stripeSessionController = {
   getSessionByStripeId: async (req: Request, res: Response) => {
     try {
       const session = await StripeSession.findOne({
-        stripeId: req.params.stripeId,
-      }).populate("userId", "email");
+        where: { stripeId: req.params.stripeId },
+        include: [
+          {
+            model: User,
+            as: "user",
+            attributes: ["email"],
+          },
+        ],
+      });
 
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
@@ -62,8 +83,7 @@ export const stripeSessionController = {
   // Create new session
   createSession: async (req: Request, res: Response) => {
     try {
-      const session = new StripeSession(req.body);
-      await session.save();
+      const session = await StripeSession.create(req.body);
       res.status(201).json(session);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -82,16 +102,13 @@ export const stripeSessionController = {
         updateData.processedAt = new Date();
       }
 
-      const session = await StripeSession.findByIdAndUpdate(
-        req.params.id,
-        updateData,
-        { new: true, runValidators: true },
-      );
+      const session = await StripeSession.findByPk(req.params.id);
 
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
 
+      await session.update(updateData);
       res.json(session);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -101,16 +118,12 @@ export const stripeSessionController = {
   // Update session
   updateSession: async (req: Request, res: Response) => {
     try {
-      const session = await StripeSession.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        { new: true, runValidators: true },
-      );
-
+      const session = await StripeSession.findByPk(req.params.id);
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
 
+      await session.update(req.body);
       res.json(session);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
@@ -120,10 +133,11 @@ export const stripeSessionController = {
   // Delete session
   deleteSession: async (req: Request, res: Response) => {
     try {
-      const session = await StripeSession.findByIdAndDelete(req.params.id);
+      const session = await StripeSession.findByPk(req.params.id);
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
       }
+      await session.destroy();
       res.json({ message: "Session deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
