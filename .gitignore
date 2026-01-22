@@ -8,8 +8,6 @@ yarn.lock
 
 # Build output
 build/
-*.js
-*.js.map
 !nodemon.json
 
 # Environment variables
