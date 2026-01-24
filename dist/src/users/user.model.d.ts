@@ -3,6 +3,7 @@ export interface IUser {
     id: number;
     email: string;
     fullName?: string;
+    image?: string;
     passwordHash?: string;
     googleId?: string;
     isVerified: boolean;
@@ -18,6 +19,7 @@ export declare class User extends Model<IUser, UserCreationAttributes> implement
     id: number;
     email: string;
     fullName?: string;
+    image?: string;
     passwordHash?: string;
     googleId?: string;
     isVerified: boolean;

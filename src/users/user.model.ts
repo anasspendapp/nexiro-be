@@ -5,6 +5,7 @@ export interface IUser {
   id: number;
   email: string;
   fullName?: string;
+  image?: string;
   passwordHash?: string;
   googleId?: string;
   isVerified: boolean;
@@ -36,6 +37,7 @@ export class User
   public id!: number;
   public email!: string;
   public fullName?: string;
+  public image?: string;
   public passwordHash?: string;
   public googleId?: string;
   public isVerified!: boolean;
@@ -53,6 +55,10 @@ User.init(
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    image: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     email: {
       type: DataTypes.STRING,

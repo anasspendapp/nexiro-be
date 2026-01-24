@@ -40,7 +40,7 @@ sequelize
   .authenticate()
   .then(() => {
     console.log("✅ Connected to PostgreSQL");
-    return sequelize.sync({ alter: false }); // Set to true for development to auto-update schema
+    return sequelize.sync({ alter: true }); // Set to true for development to auto-update schema
   })
   .then(() => console.log("✅ Database models synchronized"))
   .catch((error) => console.error("❌ Error connecting to PostgreSQL:", error));

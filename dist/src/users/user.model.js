@@ -15,6 +15,10 @@ User.init({
         autoIncrement: true,
         primaryKey: true,
     },
+    image: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     email: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,

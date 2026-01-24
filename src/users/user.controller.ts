@@ -149,10 +149,15 @@ export const userController = {
         return res.status(401).json({ message: "Invalid Google Token" });
       }
 
+      console.log("Google Token Payload:", payload);
+      console.log("Google Token Payload:", ticket);
+
       const email = payload.email;
       const firstName = payload.given_name || "";
       const lastName = payload.family_name || "";
       const fullName = `${firstName} ${lastName}`.trim();
+      const image = payload.picture || "";
+
       const isPro =
         plan === "pro" ||
         plan === "PRO" ||
@@ -171,6 +176,7 @@ export const userController = {
         user = await User.create({
           email,
           fullName,
+          image,
           passwordHash,
           googleId: payload.sub,
         });
@@ -179,6 +185,7 @@ export const userController = {
         const updates: any = {};
         if (!user.fullName && fullName) updates.fullName = fullName;
         if (!user.googleId && payload.sub) updates.googleId = payload.sub;
+        if (image) updates.image = image;
 
         // Update plan if provided and is an upgrade
         if (plan && (plan === "PRO" || plan === "STARTER")) {

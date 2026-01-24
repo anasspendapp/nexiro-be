@@ -71,7 +71,7 @@ database_1.default
     .authenticate()
     .then(() => {
     console.log("✅ Connected to PostgreSQL");
-    return database_1.default.sync({ alter: false }); // Set to true for development to auto-update schema
+    return database_1.default.sync({ alter: true }); // Set to true for development to auto-update schema
 })
     .then(() => console.log("✅ Database models synchronized"))
     .catch((error) => console.error("❌ Error connecting to PostgreSQL:", error));
