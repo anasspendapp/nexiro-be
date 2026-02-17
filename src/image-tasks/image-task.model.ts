@@ -1,7 +1,6 @@
 import { DataTypes, Model, Optional, ForeignKey } from "sequelize";
 import sequelize from "../database";
 import { User } from "../users/user.model";
-import { PriceBook } from "../price-books/price-book.model";
 
 export enum TaskStatus {
   PENDING = "pending",
@@ -14,11 +13,10 @@ export interface IImageTask {
   id: number;
   userId: ForeignKey<number>;
   status: TaskStatus;
-  inputDriveId: string;
-  outputDriveId?: string;
+  inputDriveId?: string | null;
+  outputDriveId?: string | null;
   cost: number;
   config: Record<string, any>;
-  priceSnapshotId: ForeignKey<number>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,11 +33,10 @@ export class ImageTask
   public id!: number;
   public userId!: ForeignKey<number>;
   public status!: TaskStatus;
-  public inputDriveId!: string;
-  public outputDriveId?: string;
+  public inputDriveId?: string | null;
+  public outputDriveId?: string | null;
   public cost!: number;
   public config!: Record<string, any>;
-  public priceSnapshotId!: ForeignKey<number>;
 
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -67,7 +64,7 @@ ImageTask.init(
     },
     inputDriveId: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     outputDriveId: {
       type: DataTypes.STRING,
@@ -75,24 +72,17 @@ ImageTask.init(
     },
     cost: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
+      allowNull: true,
       validate: {
         min: 0,
       },
     },
     config: {
       type: DataTypes.JSONB,
-      allowNull: false,
+      allowNull: true,
       defaultValue: {},
     },
-    priceSnapshotId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "price_books",
-        key: "id",
-      },
-    },
+
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -119,7 +109,3 @@ ImageTask.init(
 
 // Define associations
 ImageTask.belongsTo(User, { foreignKey: "userId", as: "user" });
-ImageTask.belongsTo(PriceBook, {
-  foreignKey: "priceSnapshotId",
-  as: "priceSnapshot",
-});

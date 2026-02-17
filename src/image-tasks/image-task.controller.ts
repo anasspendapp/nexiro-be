@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { ImageTask, TaskStatus } from "./image-task.model";
 import { User } from "../users/user.model";
-import { PriceBook } from "../price-books/price-book.model";
 
 export const imageTaskController = {
   // Get all image tasks
@@ -13,10 +12,6 @@ export const imageTaskController = {
             model: User,
             as: "user",
             attributes: ["email"],
-          },
-          {
-            model: PriceBook,
-            as: "priceSnapshot",
           },
         ],
         order: [["createdAt", "DESC"]],
@@ -32,12 +27,6 @@ export const imageTaskController = {
     try {
       const tasks = await ImageTask.findAll({
         where: { userId: req.params.userId },
-        include: [
-          {
-            model: PriceBook,
-            as: "priceSnapshot",
-          },
-        ],
         order: [["createdAt", "DESC"]],
       });
       res.json(tasks);
@@ -55,10 +44,6 @@ export const imageTaskController = {
             model: User,
             as: "user",
             attributes: ["email"],
-          },
-          {
-            model: PriceBook,
-            as: "priceSnapshot",
           },
         ],
       });

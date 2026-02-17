@@ -4,6 +4,7 @@
 import { User } from "../users/user.model";
 import { Plan } from "../plans/plan.model";
 import { PriceBook } from "../price-books/price-book.model";
+import { StripeSession } from "../stripe-sessions/stripe-session.model";
 
 export function initializeAssociations() {
   // PriceBook associations
@@ -18,8 +19,29 @@ export function initializeAssociations() {
     as: "priceBook",
   });
 
+  Plan.hasMany(StripeSession, {
+    foreignKey: "planId",
+    as: "stripeSessions",
+  });
+
   // User associations
   User.belongsTo(Plan, {
+    foreignKey: "planId",
+    as: "plan",
+  });
+
+  User.hasMany(StripeSession, {
+    foreignKey: "userId",
+    as: "stripeSessions",
+  });
+
+  // StripeSession associations
+  StripeSession.belongsTo(User, {
+    foreignKey: "userId",
+    as: "user",
+  });
+
+  StripeSession.belongsTo(Plan, {
     foreignKey: "planId",
     as: "plan",
   });

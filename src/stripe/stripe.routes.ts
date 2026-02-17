@@ -1,6 +1,7 @@
 import { Router } from "express";
 import express from "express";
 import { handleWebhook, createCheckoutSession } from "./stripe.controller";
+import { verifySelfAccess, verifyUserToken } from "../utils/auth.middleware";
 
 const router = Router();
 
@@ -12,6 +13,6 @@ router.post(
 );
 
 // Create checkout session
-router.post("/create-checkout-session", createCheckoutSession);
+router.post("/create-checkout-session", verifyUserToken, createCheckoutSession);
 
 export default router;

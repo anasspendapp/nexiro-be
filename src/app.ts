@@ -48,8 +48,8 @@ sequelize
 // Middleware
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "50mb" })); // Increased limit for base64 images
+app.use(express.urlencoded({ limit: "50mb", extended: true })); // Increased limit for base64 images
 app.use(morgan("dev"));
 app.set("json spaces", 2);
 
@@ -115,9 +115,7 @@ router.use("/api/image-tasks", imageTaskRoutes);
 router.use("/api/ledgers", ledgerRoutes);
 router.use("/api/stripe-sessions", stripeSessionRoutes);
 router.use("/api/admin-users", adminUserRoutes);
-
-// Stripe routes (webhook and checkout)
-app.use("/", stripeRoutes);
+router.use("/api/stripe", stripeRoutes); // Stripe routes (webhook and checkout)
 
 // Gemini routes
 router.use("/api", geminiRoutes);

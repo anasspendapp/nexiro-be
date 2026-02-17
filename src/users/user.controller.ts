@@ -3,6 +3,12 @@ import { User } from "./user.model";
 import { Plan } from "../plans/plan.model";
 import bcrypt from "bcryptjs";
 import { OAuth2Client } from "google-auth-library";
+import jwt, { SignOptions } from "jsonwebtoken";
+import { AuthRequest } from "../utils/auth.middleware";
+
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -133,14 +139,14 @@ export const userController = {
   // Google OAuth authentication
   googleAuth: async (req: Request, res: Response) => {
     try {
-      const { token, plan } = req.body;
+      const { token: googleToken, plan } = req.body;
       console.log("Received Google Auth Request:", {
         plan,
-        tokenHeader: token.substring(0, 10),
+        tokenHeader: googleToken.substring(0, 10),
       });
 
       const ticket = await client.verifyIdToken({
-        idToken: token,
+        idToken: googleToken,
         audience: process.env.GOOGLE_CLIENT_ID || "",
       });
 
@@ -157,12 +163,6 @@ export const userController = {
       const lastName = payload.family_name || "";
       const fullName = `${firstName} ${lastName}`.trim();
       const image = payload.picture || "";
-
-      const isPro =
-        plan === "pro" ||
-        plan === "PRO" ||
-        plan === "Pro" ||
-        plan === "STARTER";
 
       let user = await User.findOne({ where: { email } });
 
@@ -187,12 +187,6 @@ export const userController = {
         if (!user.googleId && payload.sub) updates.googleId = payload.sub;
         if (image) updates.image = image;
 
-        // Update plan if provided and is an upgrade
-        if (plan && (plan === "PRO" || plan === "STARTER")) {
-          updates.plan = plan;
-          updates.isPro = true;
-        }
-
         if (Object.keys(updates).length > 0) {
           await user.update(updates);
         }
@@ -203,7 +197,20 @@ export const userController = {
       const userResponse = user.toJSON();
       delete userResponse.passwordHash;
 
-      res.json({ user: userResponse });
+      // Generate JWT token
+      const signOptions: SignOptions = { expiresIn: JWT_EXPIRES_IN as any };
+      const token = jwt.sign(
+        {
+          id: user.id.toString(),
+          email: user.email,
+          fullName: user.fullName,
+          role: "user",
+        },
+        JWT_SECRET,
+        signOptions,
+      );
+
+      res.json({ user: userResponse, token });
     } catch (error: any) {
       console.error("Google Auth Error:", error);
       res.status(401).json({
@@ -214,12 +221,13 @@ export const userController = {
   },
 
   // Get current user profile (renamed from verify-payment)
-  getCurrentUser: async (req: Request, res: Response) => {
+  getCurrentUser: async (req: AuthRequest, res: Response) => {
     try {
-      const { email } = req.body;
+      // Extract email from JWT token (set by verifyUserToken middleware)
+      const email = req.user?.email;
 
       if (!email) {
-        return res.status(400).json({ message: "Email is required" });
+        return res.status(401).json({ message: "Authentication required" });
       }
 
       const user = await User.findOne({

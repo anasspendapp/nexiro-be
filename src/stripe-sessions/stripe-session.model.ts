@@ -1,10 +1,12 @@
 import { DataTypes, Model, Optional, ForeignKey } from "sequelize";
 import sequelize from "../database";
 import { User } from "../users/user.model";
+import { Plan } from "../plans/plan.model";
 
 export interface IStripeSession {
   id: number;
   userId: ForeignKey<number>;
+  planId: ForeignKey<number>;
   stripeId: string;
   amount: number;
   status: string;
@@ -24,6 +26,7 @@ export class StripeSession
 {
   public id!: number;
   public userId!: ForeignKey<number>;
+  public planId!: ForeignKey<number>;
   public stripeId!: string;
   public amount!: number;
   public status!: string;
@@ -45,6 +48,14 @@ StripeSession.init(
       allowNull: false,
       references: {
         model: "users",
+        key: "id",
+      },
+    },
+    planId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "plans",
         key: "id",
       },
     },
@@ -102,6 +113,3 @@ StripeSession.init(
     ],
   },
 );
-
-// Define associations
-StripeSession.belongsTo(User, { foreignKey: "userId", as: "user" });

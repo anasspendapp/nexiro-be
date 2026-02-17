@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { StripeSession } from "./stripe-session.model";
 import { User } from "../users/user.model";
+import { Plan } from "../plans/plan.model";
 
 export const stripeSessionController = {
   // Get all Stripe sessions
@@ -11,7 +12,12 @@ export const stripeSessionController = {
           {
             model: User,
             as: "user",
-            attributes: ["email"],
+            attributes: ["id", "email"],
+          },
+          {
+            model: Plan,
+            as: "plan",
+            attributes: ["id", "name", "price", "credits"],
           },
         ],
         order: [["createdAt", "DESC"]],
@@ -27,6 +33,13 @@ export const stripeSessionController = {
     try {
       const sessions = await StripeSession.findAll({
         where: { userId: req.params.userId },
+        include: [
+          {
+            model: Plan,
+            as: "plan",
+            attributes: ["id", "name", "price", "credits"],
+          },
+        ],
         order: [["createdAt", "DESC"]],
       });
       res.json(sessions);
@@ -43,7 +56,12 @@ export const stripeSessionController = {
           {
             model: User,
             as: "user",
-            attributes: ["email"],
+            attributes: ["id", "email"],
+          },
+          {
+            model: Plan,
+            as: "plan",
+            attributes: ["id", "name", "price", "credits"],
           },
         ],
       });
@@ -66,7 +84,12 @@ export const stripeSessionController = {
           {
             model: User,
             as: "user",
-            attributes: ["email"],
+            attributes: ["id", "email"],
+          },
+          {
+            model: Plan,
+            as: "plan",
+            attributes: ["id", "name", "price", "credits"],
           },
         ],
       });

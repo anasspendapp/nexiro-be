@@ -7,6 +7,7 @@ export interface IPlan {
   price: number;
   credits: number;
   description?: string;
+  stripeKey?: string;
   isActive: boolean;
   priceBookId: number;
   createdAt: Date;
@@ -15,7 +16,7 @@ export interface IPlan {
 
 interface PlanCreationAttributes extends Optional<
   IPlan,
-  "id" | "description" | "isActive" | "createdAt" | "updatedAt"
+  "id" | "description" | "stripeKey" | "isActive" | "createdAt" | "updatedAt"
 > {}
 
 export class Plan
@@ -27,6 +28,7 @@ export class Plan
   public price!: number;
   public credits!: number;
   public description?: string;
+  public stripeKey?: string;
   public isActive!: boolean;
   public priceBookId!: number;
 
@@ -80,6 +82,14 @@ Plan.init(
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
+    },
+    stripeKey: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "stripe_key",
+      validate: {
+        notEmpty: true,
+      },
     },
     isActive: {
       type: DataTypes.BOOLEAN,

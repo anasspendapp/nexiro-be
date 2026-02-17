@@ -9,8 +9,9 @@ export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    name: string;
-    role: string;
+    name?: string;
+    fullName?: string;
+    role?: string;
   };
 }
 
@@ -80,3 +81,47 @@ export const verifyAdmin = (
 
 // Combined middleware: verify token and admin role
 export const verifyAdminToken = [verifyToken, verifyAdmin];
+
+// Middleware to verify user role
+export const verifyUser = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  if (req.user.role !== "user") {
+    return res.status(403).json({ error: "User access required" });
+  }
+
+  next();
+};
+
+// Combined middleware: verify token and user role
+export const verifyUserToken = [verifyToken, verifyUser];
+
+// Middleware to verify user can only access their own data
+export const verifySelfAccess = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (!req.user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const requestedUserId = req.params.id;
+  const authenticatedUserId = req.user.id;
+
+  console.log(
+    `Self Access Check: Authenticated User ID: ${authenticatedUserId}, Requested User ID: ${requestedUserId}`,
+  );
+
+  if (requestedUserId !== authenticatedUserId) {
+    return res.status(403).json({ error: "You can only access your own data" });
+  }
+
+  next();
+};
