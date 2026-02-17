@@ -8,6 +8,9 @@ const user_model_1 = require("./user.model");
 const plan_model_1 = require("../plans/plan.model");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const google_auth_library_1 = require("google-auth-library");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 exports.userController = {
     // Get all users
@@ -128,13 +131,13 @@ exports.userController = {
     // Google OAuth authentication
     googleAuth: async (req, res) => {
         try {
-            const { token, plan } = req.body;
+            const { token: googleToken, plan } = req.body;
             console.log("Received Google Auth Request:", {
                 plan,
-                tokenHeader: token.substring(0, 10),
+                tokenHeader: googleToken.substring(0, 10),
             });
             const ticket = await client.verifyIdToken({
-                idToken: token,
+                idToken: googleToken,
                 audience: process.env.GOOGLE_CLIENT_ID || "",
             });
             const payload = ticket.getPayload();
@@ -148,10 +151,6 @@ exports.userController = {
             const lastName = payload.family_name || "";
             const fullName = `${firstName} ${lastName}`.trim();
             const image = payload.picture || "";
-            const isPro = plan === "pro" ||
-                plan === "PRO" ||
-                plan === "Pro" ||
-                plan === "STARTER";
             let user = await user_model_1.User.findOne({ where: { email } });
             if (!user) {
                 // Create new user with Google auth
@@ -173,11 +172,6 @@ exports.userController = {
                     updates.googleId = payload.sub;
                 if (image)
                     updates.image = image;
-                // Update plan if provided and is an upgrade
-                if (plan && (plan === "PRO" || plan === "STARTER")) {
-                    updates.plan = plan;
-                    updates.isPro = true;
-                }
                 if (Object.keys(updates).length > 0) {
                     await user.update(updates);
                 }
@@ -185,7 +179,15 @@ exports.userController = {
             console.log(`User saved/updated: ${user.email}`);
             const userResponse = user.toJSON();
             delete userResponse.passwordHash;
-            res.json({ user: userResponse });
+            // Generate JWT token
+            const signOptions = { expiresIn: JWT_EXPIRES_IN };
+            const token = jsonwebtoken_1.default.sign({
+                id: user.id.toString(),
+                email: user.email,
+                fullName: user.fullName,
+                role: "user",
+            }, JWT_SECRET, signOptions);
+            res.json({ user: userResponse, token });
         }
         catch (error) {
             console.error("Google Auth Error:", error);
@@ -198,9 +200,10 @@ exports.userController = {
     // Get current user profile (renamed from verify-payment)
     getCurrentUser: async (req, res) => {
         try {
-            const { email } = req.body;
+            // Extract email from JWT token (set by verifyUserToken middleware)
+            const email = req.user?.email;
             if (!email) {
-                return res.status(400).json({ message: "Email is required" });
+                return res.status(401).json({ message: "Authentication required" });
             }
             const user = await user_model_1.User.findOne({
                 where: { email },

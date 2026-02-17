@@ -53,6 +53,14 @@ Plan.init({
         type: sequelize_1.DataTypes.TEXT,
         allowNull: true,
     },
+    stripeKey: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+        field: "stripe_key",
+        validate: {
+            notEmpty: true,
+        },
+    },
     isActive: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,

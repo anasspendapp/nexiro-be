@@ -9,11 +9,10 @@ export interface IImageTask {
     id: number;
     userId: ForeignKey<number>;
     status: TaskStatus;
-    inputDriveId: string;
-    outputDriveId?: string;
+    inputDriveId?: string | null;
+    outputDriveId?: string | null;
     cost: number;
     config: Record<string, any>;
-    priceSnapshotId: ForeignKey<number>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -23,11 +22,10 @@ export declare class ImageTask extends Model<IImageTask, ImageTaskCreationAttrib
     id: number;
     userId: ForeignKey<number>;
     status: TaskStatus;
-    inputDriveId: string;
-    outputDriveId?: string;
+    inputDriveId?: string | null;
+    outputDriveId?: string | null;
     cost: number;
     config: Record<string, any>;
-    priceSnapshotId: ForeignKey<number>;
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }

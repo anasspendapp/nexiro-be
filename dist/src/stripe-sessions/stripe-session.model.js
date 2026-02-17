@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StripeSession = void 0;
 const sequelize_1 = require("sequelize");
 const database_1 = __importDefault(require("../database"));
-const user_model_1 = require("../users/user.model");
 class StripeSession extends sequelize_1.Model {
 }
 exports.StripeSession = StripeSession;
@@ -21,6 +20,14 @@ StripeSession.init({
         allowNull: false,
         references: {
             model: "users",
+            key: "id",
+        },
+    },
+    planId: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: "plans",
             key: "id",
         },
     },
@@ -70,6 +77,4 @@ StripeSession.init({
         },
     ],
 });
-// Define associations
-StripeSession.belongsTo(user_model_1.User, { foreignKey: "userId", as: "user" });
 //# sourceMappingURL=stripe-session.model.js.map

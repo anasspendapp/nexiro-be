@@ -2,6 +2,7 @@ import { Model, Optional, ForeignKey } from "sequelize";
 export interface IStripeSession {
     id: number;
     userId: ForeignKey<number>;
+    planId: ForeignKey<number>;
     stripeId: string;
     amount: number;
     status: string;
@@ -14,6 +15,7 @@ interface StripeSessionCreationAttributes extends Optional<IStripeSession, "id" 
 export declare class StripeSession extends Model<IStripeSession, StripeSessionCreationAttributes> implements IStripeSession {
     id: number;
     userId: ForeignKey<number>;
+    planId: ForeignKey<number>;
     stripeId: string;
     amount: number;
     status: string;

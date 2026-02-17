@@ -78,8 +78,8 @@ database_1.default
 // Middleware
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)());
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.json({ limit: "50mb" })); // Increased limit for base64 images
+app.use(express_1.default.urlencoded({ limit: "50mb", extended: true })); // Increased limit for base64 images
 app.use((0, morgan_1.default)("dev"));
 app.set("json spaces", 2);
 // Enhanced request logging middleware
@@ -135,8 +135,7 @@ router.use("/api/image-tasks", image_task_routes_1.default);
 router.use("/api/ledgers", ledger_routes_1.default);
 router.use("/api/stripe-sessions", stripe_session_routes_1.default);
 router.use("/api/admin-users", admin_user_routes_1.default);
-// Stripe routes (webhook and checkout)
-app.use("/", stripe_routes_1.default);
+router.use("/api/stripe", stripe_routes_1.default); // Stripe routes (webhook and checkout)
 // Gemini routes
 router.use("/api", gemini_routes_1.default);
 app.use("/", router);

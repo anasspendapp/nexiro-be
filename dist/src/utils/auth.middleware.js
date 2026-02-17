@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyAdminToken = exports.verifyAdmin = exports.verifyToken = void 0;
+exports.verifySelfAccess = exports.verifyUserToken = exports.verifyUser = exports.verifyAdminToken = exports.verifyAdmin = exports.verifyToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 // Middleware to verify JWT token
@@ -52,4 +52,31 @@ const verifyAdmin = (req, res, next) => {
 exports.verifyAdmin = verifyAdmin;
 // Combined middleware: verify token and admin role
 exports.verifyAdminToken = [exports.verifyToken, exports.verifyAdmin];
+// Middleware to verify user role
+const verifyUser = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
+    if (req.user.role !== "user") {
+        return res.status(403).json({ error: "User access required" });
+    }
+    next();
+};
+exports.verifyUser = verifyUser;
+// Combined middleware: verify token and user role
+exports.verifyUserToken = [exports.verifyToken, exports.verifyUser];
+// Middleware to verify user can only access their own data
+const verifySelfAccess = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+    }
+    const requestedUserId = req.params.id;
+    const authenticatedUserId = req.user.id;
+    console.log(`Self Access Check: Authenticated User ID: ${authenticatedUserId}, Requested User ID: ${requestedUserId}`);
+    if (requestedUserId !== authenticatedUserId) {
+        return res.status(403).json({ error: "You can only access your own data" });
+    }
+    next();
+};
+exports.verifySelfAccess = verifySelfAccess;
 //# sourceMappingURL=auth.middleware.js.map

@@ -5,12 +5,13 @@ export interface IPlan {
     price: number;
     credits: number;
     description?: string;
+    stripeKey?: string;
     isActive: boolean;
     priceBookId: number;
     createdAt: Date;
     updatedAt: Date;
 }
-interface PlanCreationAttributes extends Optional<IPlan, "id" | "description" | "isActive" | "createdAt" | "updatedAt"> {
+interface PlanCreationAttributes extends Optional<IPlan, "id" | "description" | "stripeKey" | "isActive" | "createdAt" | "updatedAt"> {
 }
 export declare class Plan extends Model<IPlan, PlanCreationAttributes> implements IPlan {
     id: number;
@@ -18,6 +19,7 @@ export declare class Plan extends Model<IPlan, PlanCreationAttributes> implement
     price: number;
     credits: number;
     description?: string;
+    stripeKey?: string;
     isActive: boolean;
     priceBookId: number;
     readonly createdAt: Date;

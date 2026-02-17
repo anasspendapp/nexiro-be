@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.imageTaskController = void 0;
 const image_task_model_1 = require("./image-task.model");
 const user_model_1 = require("../users/user.model");
-const price_book_model_1 = require("../price-books/price-book.model");
 exports.imageTaskController = {
     // Get all image tasks
     getAllTasks: async (req, res) => {
@@ -14,10 +13,6 @@ exports.imageTaskController = {
                         model: user_model_1.User,
                         as: "user",
                         attributes: ["email"],
-                    },
-                    {
-                        model: price_book_model_1.PriceBook,
-                        as: "priceSnapshot",
                     },
                 ],
                 order: [["createdAt", "DESC"]],
@@ -33,12 +28,6 @@ exports.imageTaskController = {
         try {
             const tasks = await image_task_model_1.ImageTask.findAll({
                 where: { userId: req.params.userId },
-                include: [
-                    {
-                        model: price_book_model_1.PriceBook,
-                        as: "priceSnapshot",
-                    },
-                ],
                 order: [["createdAt", "DESC"]],
             });
             res.json(tasks);
@@ -56,10 +45,6 @@ exports.imageTaskController = {
                         model: user_model_1.User,
                         as: "user",
                         attributes: ["email"],
-                    },
-                    {
-                        model: price_book_model_1.PriceBook,
-                        as: "priceSnapshot",
                     },
                 ],
             });

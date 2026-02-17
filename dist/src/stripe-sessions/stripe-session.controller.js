@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.stripeSessionController = void 0;
 const stripe_session_model_1 = require("./stripe-session.model");
 const user_model_1 = require("../users/user.model");
+const plan_model_1 = require("../plans/plan.model");
 exports.stripeSessionController = {
     // Get all Stripe sessions
     getAllSessions: async (req, res) => {
@@ -12,7 +13,12 @@ exports.stripeSessionController = {
                     {
                         model: user_model_1.User,
                         as: "user",
-                        attributes: ["email"],
+                        attributes: ["id", "email"],
+                    },
+                    {
+                        model: plan_model_1.Plan,
+                        as: "plan",
+                        attributes: ["id", "name", "price", "credits"],
                     },
                 ],
                 order: [["createdAt", "DESC"]],
@@ -28,6 +34,13 @@ exports.stripeSessionController = {
         try {
             const sessions = await stripe_session_model_1.StripeSession.findAll({
                 where: { userId: req.params.userId },
+                include: [
+                    {
+                        model: plan_model_1.Plan,
+                        as: "plan",
+                        attributes: ["id", "name", "price", "credits"],
+                    },
+                ],
                 order: [["createdAt", "DESC"]],
             });
             res.json(sessions);
@@ -44,7 +57,12 @@ exports.stripeSessionController = {
                     {
                         model: user_model_1.User,
                         as: "user",
-                        attributes: ["email"],
+                        attributes: ["id", "email"],
+                    },
+                    {
+                        model: plan_model_1.Plan,
+                        as: "plan",
+                        attributes: ["id", "name", "price", "credits"],
                     },
                 ],
             });
@@ -66,7 +84,12 @@ exports.stripeSessionController = {
                     {
                         model: user_model_1.User,
                         as: "user",
-                        attributes: ["email"],
+                        attributes: ["id", "email"],
+                    },
+                    {
+                        model: plan_model_1.Plan,
+                        as: "plan",
+                        attributes: ["id", "name", "price", "credits"],
                     },
                 ],
             });

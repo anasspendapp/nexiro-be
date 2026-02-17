@@ -7,7 +7,6 @@ exports.ImageTask = exports.TaskStatus = void 0;
 const sequelize_1 = require("sequelize");
 const database_1 = __importDefault(require("../database"));
 const user_model_1 = require("../users/user.model");
-const price_book_model_1 = require("../price-books/price-book.model");
 var TaskStatus;
 (function (TaskStatus) {
     TaskStatus["PENDING"] = "pending";
@@ -39,7 +38,7 @@ ImageTask.init({
     },
     inputDriveId: {
         type: sequelize_1.DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     outputDriveId: {
         type: sequelize_1.DataTypes.STRING,
@@ -47,23 +46,15 @@ ImageTask.init({
     },
     cost: {
         type: sequelize_1.DataTypes.DECIMAL(10, 2),
-        allowNull: false,
+        allowNull: true,
         validate: {
             min: 0,
         },
     },
     config: {
         type: sequelize_1.DataTypes.JSONB,
-        allowNull: false,
+        allowNull: true,
         defaultValue: {},
-    },
-    priceSnapshotId: {
-        type: sequelize_1.DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: "price_books",
-            key: "id",
-        },
     },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
@@ -88,8 +79,4 @@ ImageTask.init({
 });
 // Define associations
 ImageTask.belongsTo(user_model_1.User, { foreignKey: "userId", as: "user" });
-ImageTask.belongsTo(price_book_model_1.PriceBook, {
-    foreignKey: "priceSnapshotId",
-    as: "priceSnapshot",
-});
 //# sourceMappingURL=image-task.model.js.map
