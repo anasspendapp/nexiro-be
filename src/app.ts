@@ -26,6 +26,7 @@ import "./admin-users/admin-user.model";
 
 // Initialize model associations
 import { initializeAssociations } from "./models/associations";
+import { handleWebhook } from "./stripe/stripe.controller";
 
 require("dotenv").config();
 
@@ -48,6 +49,13 @@ sequelize
 // Middleware
 app.use(helmet());
 app.use(cors());
+
+app.use(
+  "/api/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  handleWebhook,
+);
+
 app.use(express.json({ limit: "50mb" })); // Increased limit for base64 images
 app.use(express.urlencoded({ limit: "50mb", extended: true })); // Increased limit for base64 images
 app.use(morgan("dev"));

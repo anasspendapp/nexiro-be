@@ -61,6 +61,7 @@ require("./stripe-sessions/stripe-session.model");
 require("./admin-users/admin-user.model");
 // Initialize model associations
 const associations_1 = require("./models/associations");
+const stripe_controller_1 = require("./stripe/stripe.controller");
 require("dotenv").config();
 const app = (0, express_1.default)();
 const router = (0, express_1.Router)();
@@ -78,6 +79,7 @@ database_1.default
 // Middleware
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)());
+app.use("/api/stripe/webhook", express_1.default.raw({ type: "application/json" }), stripe_controller_1.handleWebhook);
 app.use(express_1.default.json({ limit: "50mb" })); // Increased limit for base64 images
 app.use(express_1.default.urlencoded({ limit: "50mb", extended: true })); // Increased limit for base64 images
 app.use((0, morgan_1.default)("dev"));
