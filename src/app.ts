@@ -27,6 +27,7 @@ import "./admin-users/admin-user.model";
 // Initialize model associations
 import { initializeAssociations } from "./models/associations";
 import { handleWebhook } from "./stripe/stripe.controller";
+import { verifyAdminToken } from "./utils/auth.middleware";
 
 require("dotenv").config();
 
@@ -120,8 +121,8 @@ router.use("/api/users", userRoutes);
 router.use("/api/price-books", priceBookRoutes);
 router.use("/api/plans", planRoutes);
 router.use("/api/image-tasks", imageTaskRoutes);
-router.use("/api/ledgers", ledgerRoutes);
-router.use("/api/stripe-sessions", stripeSessionRoutes);
+router.use("/api/ledgers", verifyAdminToken, ledgerRoutes);
+router.use("/api/stripe-sessions", verifyAdminToken, stripeSessionRoutes);
 router.use("/api/admin-users", adminUserRoutes);
 router.use("/api/stripe", stripeRoutes); // Stripe routes (webhook and checkout)
 

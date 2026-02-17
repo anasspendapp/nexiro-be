@@ -62,6 +62,7 @@ require("./admin-users/admin-user.model");
 // Initialize model associations
 const associations_1 = require("./models/associations");
 const stripe_controller_1 = require("./stripe/stripe.controller");
+const auth_middleware_1 = require("./utils/auth.middleware");
 require("dotenv").config();
 const app = (0, express_1.default)();
 const router = (0, express_1.Router)();
@@ -134,8 +135,8 @@ router.use("/api/users", user_routes_1.default);
 router.use("/api/price-books", price_book_routes_1.default);
 router.use("/api/plans", plan_routes_1.default);
 router.use("/api/image-tasks", image_task_routes_1.default);
-router.use("/api/ledgers", ledger_routes_1.default);
-router.use("/api/stripe-sessions", stripe_session_routes_1.default);
+router.use("/api/ledgers", auth_middleware_1.verifyAdminToken, ledger_routes_1.default);
+router.use("/api/stripe-sessions", auth_middleware_1.verifyAdminToken, stripe_session_routes_1.default);
 router.use("/api/admin-users", admin_user_routes_1.default);
 router.use("/api/stripe", stripe_routes_1.default); // Stripe routes (webhook and checkout)
 // Gemini routes
