@@ -52,11 +52,12 @@ const handleWebhook = async (req, res) => {
                 status: "succeeded",
                 processedAt: new Date(),
             });
-            // Update user with new plan and credits
+            // Update user with new plan
             await user.update({
                 planId: plan.id,
-                creditBalance: user.creditBalance + plan.credits,
             });
+            // Increment credits using Sequelize's increment method to avoid string concatenation issues
+            await user.increment('creditBalance', { by: plan.credits });
             console.log(`Payment successful for user ${user.email}. Plan: ${plan.name}, Credits added: ${plan.credits}`);
         }
         catch (dbErr) {
