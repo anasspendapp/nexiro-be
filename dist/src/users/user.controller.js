@@ -161,6 +161,7 @@ exports.userController = {
                     image,
                     passwordHash,
                     googleId: payload.sub,
+                    creditBalance: 8, // Initial credits for new users
                 });
             }
             else {
