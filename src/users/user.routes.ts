@@ -21,4 +21,7 @@ router.post("/google-auth", userController.googleAuth);
 // Get current user profile (renamed from verify-payment)
 router.post("/me", verifyUserToken, userController.getCurrentUser);
 
+// Test email sending (development only)
+router.post("/test-email", userController.sendTestEmail);
+
 export default router;

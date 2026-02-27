@@ -35,6 +35,17 @@ export function initializeAssociations() {
     as: "stripeSessions",
   });
 
+  // User referral associations (self-referential)
+  User.hasMany(User, {
+    foreignKey: "referredById",
+    as: "referrals",
+  });
+
+  User.belongsTo(User, {
+    foreignKey: "referredById",
+    as: "referredByUser",
+  });
+
   // StripeSession associations
   StripeSession.belongsTo(User, {
     foreignKey: "userId",

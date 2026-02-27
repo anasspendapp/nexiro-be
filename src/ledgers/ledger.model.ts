@@ -80,7 +80,7 @@ Ledger.init(
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        isIn: [["ImageTask", "StripeSession"]],
+        isIn: [["ImageTask", "StripeSession", "Referral"]],
       },
     },
     description: {
