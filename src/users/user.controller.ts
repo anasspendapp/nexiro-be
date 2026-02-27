@@ -34,6 +34,11 @@ export const userController = {
             as: "plan",
             attributes: ["id", "name", "price", "credits"],
           },
+          {
+            model: User,
+            as: "referrer",
+            attributes: ["id", "email", "fullName"],
+          }
         ],
       });
       res.json(users);
