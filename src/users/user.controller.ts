@@ -36,9 +36,9 @@ export const userController = {
           },
           {
             model: User,
-            as: "referrer",
+            as: "referredByUser",
             attributes: ["id", "email", "fullName"],
-          }
+          },
         ],
       });
       res.json(users);
@@ -57,6 +57,11 @@ export const userController = {
             model: Plan,
             as: "plan",
             attributes: ["id", "name", "price", "credits"],
+          },
+          {
+            model: User,
+            as: "referredByUser",
+            attributes: ["id", "email", "fullName"],
           },
         ],
       });
@@ -339,6 +344,11 @@ export const userController = {
             model: Plan,
             as: "plan",
             attributes: ["id", "name", "price", "credits"],
+          },
+          {
+            model: User,
+            as: "referredByUser",
+            attributes: ["id", "email", "fullName"],
           },
         ],
       });

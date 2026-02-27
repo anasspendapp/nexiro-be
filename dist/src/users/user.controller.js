@@ -28,6 +28,11 @@ exports.userController = {
                         as: "plan",
                         attributes: ["id", "name", "price", "credits"],
                     },
+                    {
+                        model: user_model_1.User,
+                        as: "referredByUser",
+                        attributes: ["id", "email", "fullName"],
+                    },
                 ],
             });
             res.json(users);
@@ -46,6 +51,11 @@ exports.userController = {
                         model: plan_model_1.Plan,
                         as: "plan",
                         attributes: ["id", "name", "price", "credits"],
+                    },
+                    {
+                        model: user_model_1.User,
+                        as: "referredByUser",
+                        attributes: ["id", "email", "fullName"],
                     },
                 ],
             });
@@ -284,6 +294,11 @@ exports.userController = {
                         model: plan_model_1.Plan,
                         as: "plan",
                         attributes: ["id", "name", "price", "credits"],
+                    },
+                    {
+                        model: user_model_1.User,
+                        as: "referredByUser",
+                        attributes: ["id", "email", "fullName"],
                     },
                 ],
             });
