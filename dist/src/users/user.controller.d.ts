@@ -9,5 +9,6 @@ export declare const userController: {
     getCreditBalance: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
     googleAuth: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
     getCurrentUser: (req: AuthRequest, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+    sendTestEmail: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 };
 //# sourceMappingURL=user.controller.d.ts.map

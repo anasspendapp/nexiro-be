@@ -70,6 +70,21 @@ User.init({
         onDelete: "SET NULL",
         onUpdate: "CASCADE",
     },
+    referralCode: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+    },
+    referredById: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: "users",
+            key: "id",
+        },
+        onDelete: "SET NULL",
+        onUpdate: "CASCADE",
+    },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
@@ -89,6 +104,10 @@ User.init({
         },
         {
             unique: true,
+            fields: ["referralCode"],
+        },
+        {
+            unique: true,
             fields: ["googleId"],
             where: {
                 googleId: {
@@ -97,5 +116,27 @@ User.init({
             },
         },
     ],
+    hooks: {
+        beforeCreate: async (user) => {
+            // Auto-generate referral code if not provided
+            if (!user.referralCode) {
+                // Generate code based on fullName or ID
+                const generateCode = () => {
+                    if (user.fullName && user.fullName.trim()) {
+                        const slugified = user.fullName
+                            .toLowerCase()
+                            .trim()
+                            .replace(/\s+/g, "-")
+                            .replace(/[^a-z0-9-]/g, "")
+                            .replace(/-+/g, "-")
+                            .replace(/^-|-$/g, "");
+                        return slugified ? `${slugified}+nexiro` : `nexiro-${Date.now()}`;
+                    }
+                    return `nexiro-${Date.now()}`;
+                };
+                user.referralCode = generateCode();
+            }
+        },
+    },
 });
 //# sourceMappingURL=user.model.js.map

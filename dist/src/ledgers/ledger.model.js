@@ -55,7 +55,7 @@ Ledger.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
         validate: {
-            isIn: [["ImageTask", "StripeSession"]],
+            isIn: [["ImageTask", "StripeSession", "Referral"]],
         },
     },
     description: {

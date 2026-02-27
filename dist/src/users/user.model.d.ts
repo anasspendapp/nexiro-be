@@ -10,10 +10,12 @@ export interface IUser {
     googleDriveFolderId?: string;
     creditBalance: number;
     planId?: number;
+    referralCode: string;
+    referredById?: number;
     createdAt: Date;
     updatedAt: Date;
 }
-interface UserCreationAttributes extends Optional<IUser, "id" | "fullName" | "passwordHash" | "googleId" | "isVerified" | "googleDriveFolderId" | "creditBalance" | "planId" | "createdAt" | "updatedAt"> {
+interface UserCreationAttributes extends Optional<IUser, "id" | "fullName" | "passwordHash" | "googleId" | "isVerified" | "googleDriveFolderId" | "creditBalance" | "planId" | "referralCode" | "referredById" | "createdAt" | "updatedAt"> {
 }
 export declare class User extends Model<IUser, UserCreationAttributes> implements IUser {
     id: number;
@@ -26,6 +28,8 @@ export declare class User extends Model<IUser, UserCreationAttributes> implement
     googleDriveFolderId?: string;
     creditBalance: number;
     planId?: number;
+    referralCode: string;
+    referredById?: number;
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }
