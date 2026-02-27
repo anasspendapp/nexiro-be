@@ -5,10 +5,12 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "build": "yarn && tsc",
+    "build": "rm -rf dist && tsc",
     "start": "node dist/src/index.js",
     "test": "jest",
-    "generate-referral-codes": "ts-node data/scripts/generate-referral-codes.ts"
+    "generate-referral-codes": "ts-node data/scripts/generate-referral-codes.ts",
+    "test:email:welcome": "ts-node data/scripts/test-email.ts welcome",
+    "test:email:reward": "ts-node data/scripts/test-email.ts reward"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +28,8 @@
     "morgan": "^1.10.1",
     "pg": "^8.17.1",
     "pg-hstore": "^2.3.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "resend": "^3.5.0",
     "sequelize": "^6.37.7",
     "stripe": "^20.2.0"
