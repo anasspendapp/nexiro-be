@@ -8,8 +8,8 @@ const credits_1 = require("../utils/credits");
 const gemini_types_1 = require("./gemini.types");
 const genAI = new genai_1.GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 // Model names
-const IMAGE_MODEL_NAME = "gemini-3-pro-image-preview";
-const TEXT_MODEL_NAME = "gemini-3.1-flash-image-preview";
+const IMAGE_MODEL_NAME = "gemini-3.1-flash-image-preview";
+const TEXT_MODEL_NAME = "gemini-3-pro-preview";
 const FLASH_MODEL_NAME = "gemini-3-flash-preview";
 // Internal helper to call Gemini API
 const callGemini = async (model, contents, config) => {
