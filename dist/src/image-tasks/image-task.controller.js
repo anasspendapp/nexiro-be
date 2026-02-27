@@ -7,7 +7,10 @@ exports.imageTaskController = {
     // Get all image tasks
     getAllTasks: async (req, res) => {
         try {
-            const tasks = await image_task_model_1.ImageTask.findAll({
+            const page = Math.max(Number.parseInt(String(req.query.page ?? "1"), 10) || 1, 1);
+            const limit = Math.max(Number.parseInt(String(req.query.limit ?? "10"), 10) || 10, 1);
+            const offset = (page - 1) * limit;
+            const { rows: tasks, count: total } = await image_task_model_1.ImageTask.findAndCountAll({
                 include: [
                     {
                         model: user_model_1.User,
@@ -16,8 +19,18 @@ exports.imageTaskController = {
                     },
                 ],
                 order: [["createdAt", "DESC"]],
+                limit,
+                offset,
             });
-            res.json(tasks);
+            res.json({
+                data: tasks,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                },
+            });
         }
         catch (error) {
             res.status(500).json({ error: error.message });
