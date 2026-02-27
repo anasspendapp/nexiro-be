@@ -1,10 +1,6 @@
 import { Router } from "express";
 import { userController } from "./user.controller";
-import {
-  verifyAdminToken,
-  verifyUserToken,
-  verifySelfAccess,
-} from "../utils/auth.middleware";
+import { verifyAdminToken, verifyUserToken } from "../utils/auth.middleware";
 
 const router = Router();
 
@@ -20,6 +16,13 @@ router.post("/google-auth", userController.googleAuth);
 
 // Get current user profile (renamed from verify-payment)
 router.post("/me", verifyUserToken, userController.getCurrentUser);
+
+// Update current user referral code (self-service)
+router.patch(
+  "/me/referral-code",
+  verifyUserToken,
+  userController.updateMyReferralCode,
+);
 
 // Test email sending (development only)
 router.post("/test-email", userController.sendTestEmail);

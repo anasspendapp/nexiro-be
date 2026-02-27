@@ -296,6 +296,79 @@ exports.userController = {
             res.status(500).json({ message: "Server error", error: error.message });
         }
     },
+    // Update current user's referral code (self-service)
+    updateMyReferralCode: async (req, res) => {
+        try {
+            const email = req.user?.email;
+            const { referralCode } = req.body;
+            if (!email) {
+                return res.status(401).json({
+                    error: "Authentication required",
+                    code: "AUTH_REQUIRED",
+                });
+            }
+            if (!referralCode || typeof referralCode !== "string") {
+                return res.status(400).json({
+                    error: "Referral code is required",
+                    code: "REFERRAL_CODE_REQUIRED",
+                });
+            }
+            const normalizedReferralCode = referralCode
+                .toLowerCase()
+                .trim()
+                .replace(/\s+/g, "-");
+            const validCodePattern = /^[a-z0-9+-]{3,50}$/;
+            if (!validCodePattern.test(normalizedReferralCode)) {
+                return res.status(400).json({
+                    error: "Referral code must be 3-50 characters and contain only lowercase letters, numbers, +, or -",
+                    code: "INVALID_REFERRAL_CODE_FORMAT",
+                });
+            }
+            const user = await user_model_1.User.findOne({ where: { email } });
+            if (!user) {
+                return res.status(404).json({
+                    error: "User not found",
+                    code: "USER_NOT_FOUND",
+                });
+            }
+            if (user.referralCode === normalizedReferralCode) {
+                return res.status(200).json({
+                    message: "Referral code is already set to this value",
+                    referralCode: user.referralCode,
+                });
+            }
+            const referralUsageCount = await user_model_1.User.count({
+                where: { referredById: user.id },
+            });
+            if (referralUsageCount > 0) {
+                return res.status(409).json({
+                    error: "Referral code cannot be changed because it has already been used",
+                    code: "REFERRAL_CODE_LOCKED",
+                });
+            }
+            const existingUserWithCode = await user_model_1.User.findOne({
+                where: { referralCode: normalizedReferralCode },
+            });
+            if (existingUserWithCode && existingUserWithCode.id !== user.id) {
+                return res.status(409).json({
+                    error: "This referral code is already taken",
+                    code: "REFERRAL_CODE_TAKEN",
+                });
+            }
+            await user.update({ referralCode: normalizedReferralCode });
+            return res.json({
+                message: "Referral code updated successfully",
+                referralCode: user.referralCode,
+            });
+        }
+        catch (error) {
+            console.error("Error updating referral code:", error);
+            return res.status(500).json({
+                error: "Failed to update referral code",
+                code: "REFERRAL_CODE_UPDATE_FAILED",
+            });
+        }
+    },
     // Test email sending (for development/testing only)
     sendTestEmail: async (req, res) => {
         try {
