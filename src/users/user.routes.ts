@@ -9,31 +9,11 @@ import {
 const router = Router();
 
 router.get("/", verifyAdminToken, userController.getAllUsers);
-router.get(
-  "/:id",
-  verifyUserToken,
-  verifySelfAccess,
-  userController.getUserById,
-);
-router.post("/", userController.createUser);
-router.put(
-  "/:id",
-  verifyUserToken,
-  verifySelfAccess,
-  userController.updateUser,
-);
-router.delete(
-  "/:id",
-  verifyUserToken,
-  verifySelfAccess,
-  userController.deleteUser,
-);
-router.get(
-  "/:id/credits",
-  verifyUserToken,
-  verifySelfAccess,
-  userController.getCreditBalance,
-);
+router.get("/:id", verifyUserToken, userController.getUserById);
+router.post("/", verifyAdminToken, userController.createUser);
+router.put("/:id", verifyAdminToken, userController.updateUser);
+router.delete("/:id", verifyAdminToken, userController.deleteUser);
+router.get("/:id/credits", verifyUserToken, userController.getCreditBalance);
 
 // Google OAuth authentication
 router.post("/google-auth", userController.googleAuth);
