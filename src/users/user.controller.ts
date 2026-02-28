@@ -28,6 +28,7 @@ export const userController = {
     try {
       const users = await User.findAll({
         attributes: { exclude: ["passwordHash"] },
+        order: [["createdAt", "DESC"]],
         include: [
           {
             model: Plan,

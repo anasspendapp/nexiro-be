@@ -14,6 +14,7 @@ import stripeSessionRoutes from "./stripe-sessions/stripe-session.routes";
 import stripeRoutes from "./stripe/stripe.routes";
 import geminiRoutes from "./gemini/gemini.routes";
 import adminUserRoutes from "./admin-users/admin-user.routes";
+import analyticsRoutes from "./analytics/analytics.routes";
 
 // Import models to initialize associations
 import "./users/user.model";
@@ -125,6 +126,7 @@ router.use("/api/ledgers", verifyAdminToken, ledgerRoutes);
 router.use("/api/stripe-sessions", verifyAdminToken, stripeSessionRoutes);
 router.use("/api/admin-users", adminUserRoutes);
 router.use("/api/stripe", stripeRoutes); // Stripe routes (webhook and checkout)
+router.use("/api/analytics", analyticsRoutes); // Analytics routes
 
 // Gemini routes
 router.use("/api", geminiRoutes);
