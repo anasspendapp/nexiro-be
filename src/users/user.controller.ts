@@ -198,7 +198,7 @@ export const userController = {
           10,
         );
 
-        let creditBalance = 8; // Base welcome bonus
+        let creditBalance = 5; // Base welcome bonus
         let referredById: number | undefined;
 
         // Validate and process referral code if provided
@@ -206,7 +206,7 @@ export const userController = {
           referrer = await validateReferralCode(referralCode);
           if (referrer) {
             referredById = referrer.id;
-            creditBalance = 18; // 8 base + 10 referral bonus
+            creditBalance = 13; // 8 base + 5 referral bonus
           } else {
             console.warn(
               `Invalid referral code provided: ${referralCode} for user ${email}`,
@@ -237,27 +237,27 @@ export const userController = {
             await Ledger.create({
               userId: user.id,
               type: TransactionType.CREDIT,
-              amount: 10,
+              amount: 5,
               balanceAfter: creditBalance,
               referenceModel: "Referral",
               description: "Referral signup bonus",
             });
 
             // Add referral reward credits to referrer via ledger
-            const referrerNewBalance = (referrer.creditBalance || 0) + 10;
-            await referrer.increment("creditBalance", { by: 10 });
+            const referrerNewBalance = (referrer.creditBalance || 0) + 5;
+            await referrer.increment("creditBalance", { by: 5 });
 
             await Ledger.create({
               userId: referrer.id,
               type: TransactionType.CREDIT,
-              amount: 10,
+              amount: 5,
               balanceAfter: referrerNewBalance,
               referenceModel: "Referral",
               description: `Referral reward - ${user.fullName || user.email} signed up`,
             });
 
             console.log(
-              `Referral credits granted: ${user.email} +10, ${referrer.email} +10`,
+              `Referral credits granted: ${user.email} +5, ${referrer.email} +5`,
             );
 
             // Send emails asynchronously (non-blocking)
