@@ -4,9 +4,9 @@
   "description": "Backend API for Nexira",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "node init && nodemon src/index.ts",
-    "build": "node init && rm -rf dist && tsc",
-    "start": "node init && node dist/src/index.js",
+    "dev": "nodemon src/index.ts",
+    "build": "rm -rf dist && tsc",
+    "start": "node dist/src/index.js",
     "test": "jest",
     "generate-referral-codes": "ts-node data/scripts/generate-referral-codes.ts",
     "test:email:welcome": "ts-node data/scripts/test-email.ts welcome",
